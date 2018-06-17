@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Vaggo</title>
+    <link rel="stylesheet" type="text/css" href="static/css/default.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtGmGSZD-evug4enuMjO22nHlqxpgh3rY"></script>
+</head>
+
+<body>
+    <div id="container">
+        <div id="slide-out" class="sidenav">
+            <h3>Filtros</h3>
+            <br>
+            <div id="side-filter"></div>
+        </div>
+
+        <div class='navbar-fixed'>
+            <nav>
+                <div class="nav-wrapper grey lighten-5">
+                    <a href="#" class="brand-logo">VAGOO</a>
+                    <ul class="right hide-on-med-and-down">
+                        <li>
+                            <a href="#" data-target="slide-out"  class="sidenav-trigger black-text text-darken-2">
+                                <i class="material-icons">menu</i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+
+        <div id="map"></div>
+
+    </div>
+
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <ul id="details"></ul>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Fechar</a>
+        </div>
+    </div>
+
+    <div id="layout" style="display:none;">
+        <div class="[type]">
+            <span class="titulolegenda">[name]</span>
+            <br/>
+            <span class="sub-titulo-legenda">[desc]</span>
+            <p>
+                <label>
+                    <input type="checkbox" class="filled-in filters" value="[type]_ocupado" checked="checked" />
+                    <span class="[type]">Ocupado</span>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <input type="checkbox" class="filled-in filters" value="[type]_vago" checked="checked" />
+                    <span class="[type]">Vago</span>
+                </label>
+            </p>
+        </div>
+    </div>
+
+    <footer>
+      <div id="footer">
+        <div class="legenda grey lighten-5"></div>
+      </div>
+    </footer>
+
+    <script src="static/scripts/google-maps-customizer.js"></script>
+    <script src="static/scripts/dictionary.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js"></script>
+    <script>
+
+        var data = {{ data|tojson|safe }};
+        var filters = [];
+
+        initMap();
+        createFilters();
+
+        function onPinClick(i) {
+            var list = document.getElementById('details');
+            list.innerHTML = '';
+
+            var excludeProperties = ['lat', 'lng', 'google_maps_url', 'created_at'];
+
+            var filteredProperties = Object.keys(data[i]).filter(function (item) {
+                return excludeProperties.indexOf(item) === -1;
+            }).sort();
+
+            for (prop in filteredProperties) {
+                // console.log(filteredProperties, prop, filteredProperties[prop], dictionary.fieldNames[filteredProperties[prop]]);
+                list.innerHTML +=
+                    dictionary.fieldNames[filteredProperties[prop]]
+                        ? '<li><span>' + dictionary.fieldNames[filteredProperties[prop]] + ': </span>' + CapFL(data[i][filteredProperties[prop]]) + '</li>'
+                        : '';
+            }
+
+            $('.modal').modal('open');
+        }
+
+        function createFilters() {
+            var filterContainer = document.getElementById('side-filter');
+            var templateFilterItem = document.getElementById('layout').innerHTML;
+
+            filterContainer.innerHTM = '';
+
+            var keys = Object.keys(dictionary.typeNames);
+            for (let i = 0, len = keys.length; i < len; i++) {
+
+                var key = keys[i];
+
+                var filterItem = templateFilterItem;
+
+                filterItem = filterItem.split('[type]').join(key);
+                filterItem = filterItem.split('[name]').join(dictionary.typeNames[key].name);
+                filterItem = filterItem.split('[desc]').join(dictionary.typeNames[key].desc);
+                filterContainer.innerHTML += filterItem;
+            }
+
+            $('.filters').on('click', function (c) {
+
+                var _this = $(this);
+                var _thisVal = $(this).val();
+
+                if ($(_this).is(":not(:checked)") && filters.indexOf(_thisVal) === -1)
+                    filters.push(_thisVal);
+                else
+                    filters.indexOf(_thisVal) !== -1 && filters.splice(filters.indexOf(_thisVal), 1);
+
+                for (let i = 0, len = data.length; i < len; i++) {
+                    marker = markers[i];
+
+                    //SE CATEGORIA NÃO ESTA NO FILTRO, MOSTRA
+                    if (filters.indexOf(marker.category) === -1) {
+                        marker.setVisible(true);
+                    }
+                    else {
+                        marker.setVisible(false);
+                    }
+                }
+
+            });
+
+        }
+
+        function CapFL(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        $(document).ready(function () {
+            $('.modal').modal();
+            $('.sidenav').sidenav({
+              edge: 'right',
+            });
+            $('.sidenav').sidenav('open');
+        });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+service: default
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /static
+  static_dir: server/static
+  application_readable: true
+
+- url: /.*
+  script: server.main.app
+
+
+libraries:
+- name: ssl
+  version: latest
+
+skip_files:
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*/RCS/.*$
+- ^(.*/)?\..*$
+- ^(.*/)?.*\.bak$
+- venv
+- node_modules
+- test
+- build
+- client
+- config
